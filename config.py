@@ -31,6 +31,16 @@ LOCAL_STORAGE_PATH = os.environ.get('LOCAL_STORAGE_PATH', '/tmp')
 GCP_SA_CREDENTIALS = os.environ.get('GCP_SA_CREDENTIALS', '')
 GCP_BUCKET_NAME = os.environ.get('GCP_BUCKET_NAME', '')
 
+# Get the local upload storage path
+LOCAL_UPLOAD_STORAGE_PATH = os.environ.get('LOCAL_UPLOAD_STORAGE_PATH')
+
+# If LOCAL_UPLOAD_STORAGE_PATH is not set, use the current working directory
+if LOCAL_UPLOAD_STORAGE_PATH is None:
+    LOCAL_UPLOAD_STORAGE_PATH = os.path.join(os.getcwd(), 'uploaded')
+
+# Get the API URL, defaulting to 'http://localhost' if not set
+LOCAL_API_URL = os.environ.get("API_URL", "http://localhost")
+
 def validate_env_vars(provider):
 
     """ Validate the necessary environment variables for the selected storage provider """

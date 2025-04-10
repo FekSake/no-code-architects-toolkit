@@ -17,12 +17,14 @@
 
 
 import os
+import shutil
 import logging
 from abc import ABC, abstractmethod
 from services.gcp_toolkit import upload_to_gcs
 from services.s3_toolkit import upload_to_s3
 from config import validate_env_vars
 from urllib.parse import urlparse
+from config import LOCAL_API_URL, LOCAL_UPLOAD_STORAGE_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +44,26 @@ class CloudStorageProvider(ABC):
     @abstractmethod
     def upload_file(self, file_path: str) -> str:
         pass
+
+class LocalStorageProvider(CloudStorageProvider):
+    def __init__(self):
+        os.makedirs(LOCAL_UPLOAD_STORAGE_PATH, exist_ok=True)
+    
+    def upload_file(self, file_path):
+        logger.info(f"Received file path for upload: {file_path}")
+
+        filename = os.path.basename(file_path)  # Extract filename from the source path
+        destination_file_path = os.path.join(LOCAL_UPLOAD_STORAGE_PATH, filename)
+
+        shutil.copy(file_path, destination_file_path)
+
+        logger.info(f"File saved to: {destination_file_path}")
+
+        file_url = LOCAL_API_URL + f"/v1/BETA/media/downloadl/{filename}"
+
+        logger.info(f"File URL: {file_url}")
+
+        return file_url
 
 class GCPStorageProvider(CloudStorageProvider):
     def __init__(self):
@@ -102,6 +124,8 @@ def get_storage_provider() -> CloudStorageProvider:
 
         validate_env_vars('GCP')
         return GCPStorageProvider()
+
+    return LocalStorageProvider()
     
     raise ValueError(f"No cloud storage settings provided.")
 

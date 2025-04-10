@@ -16,7 +16,7 @@
 
 
 
-from flask import Flask, request
+from flask import Flask, request, Response
 from queue import Queue
 from services.webhook import send_webhook
 import threading
@@ -79,8 +79,12 @@ def create_app():
                 
                 if bypass_queue or 'webhook_url' not in data:
                     
-                    response = f(job_id=job_id, data=data, *args, **kwargs)
+                    response = f(job_id=job_id, data=data, *args, **kwargs) 
                     run_time = time.time() - start_time
+
+                    if isinstance(response[0], Response):
+                        return response[0], response[2]
+
                     return {
                         "code": response[2],
                         "id": data.get("id"),
@@ -184,6 +188,11 @@ def create_app():
     app.register_blueprint(v1_s3_upload_bp)
     app.register_blueprint(v1_video_thumbnail_bp)
     app.register_blueprint(v1_media_download_bp)
+
+    # BETA
+    from routes.v1.media.download_local import v1_media_local_download_bp
+
+    app.register_blueprint(v1_media_local_download_bp)
 
     return app
 
